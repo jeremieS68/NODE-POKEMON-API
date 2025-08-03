@@ -5,7 +5,7 @@ const favicon = require('serve-favicon');
 const bodyParser = require('body-parser');
 const { Sequelize, DataTypes } = require('sequelize');
 const { success, getUniqueId } = require('./helper.js');
-let pokemons = require('./mock-pokemon');
+let pokemons = require('./src/db/mock-pokemon.js');
 const PokemonModel = require('./src/models/pokemon.js')
 
 const app = express();
@@ -19,9 +19,9 @@ const sequelize = new Sequelize(
     host: 'localhost', // Host de la BDD
     dialect: 'mariadb', // Type de BDD (mysql, mariadb, postgres, sqlite)
     dialectOptions: {
-      timezone: 'Etc/GMT-2' 
+      timezone: 'Etc/GMT' 
     },
-    logging: false,
+    logging: false, // Désactiver les logs de requêtes SQL
   }
 );
 
@@ -35,8 +35,21 @@ sequelize.authenticate()
 
 const Pokemon = PokemonModel(sequelize, DataTypes); 
   
-sequelize.sync({force: false})
-  .then(_ => console.log('La base de données "Pokedex" a bien été synchronisée !'))
+sequelize.sync({force: true}) //force: true pour recréer la table à chaque démarrage (uniquement pour le développement pas production)
+  .then(_ => {
+    console.log('La base de données "Pokedex" a bien été synchronisée !');
+
+    pokemons.map(pokemon => { //.map() pour parcourir le tableau de pokémons
+      Pokemon.create({ // Pokemon.create() pour créer un nouveau Pokémon dans la base de données
+      name: pokemon.name,
+      hp: pokemon.hp,
+      cp: pokemon.cp,
+      picture: pokemon.picture,
+      types: pokemon.types.join() //.join() pour convertir le tableau en chaîne de caractères
+      //.split() pour convertir la chaîne de caractères en tableau
+    }).then(pokemon => console.log(pokemon.toJSON())) //.toJSON() pour afficher l'objet Pokémon créé
+  })
+})
 
 app
   .use(favicon(__dirname + '/favicon.ico'))
