@@ -24,7 +24,15 @@ module.exports = (sequelize, DataTypes) => {
     },
     types: {
       type: DataTypes.STRING,
-      allowNull: false
+      allowNull: false,
+      //Getter : BDD -> APi Rest
+      //Setter : API Rest -> BDD
+      get() {
+        return this.getDataValue('types').split(','); //string -> tableau
+      },
+      set(types) {
+        this.setDataValue('types', types.join()); //tableau -> string
+      }
     }
   }, {
     timestamps: true,
